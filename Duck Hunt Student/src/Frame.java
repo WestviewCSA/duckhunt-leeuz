@@ -20,18 +20,21 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 	//Create an Fish Object
 	Font bigFont = new Font("Serif", Font.BOLD, 100);
 	Font medFont = new Font("Serif", Font.BOLD, 50);
-	Shark2 shark2 = new Shark2();
-	Fish1 fish1 = new Fish1();
-	Background background = new Background("background.png");
-	Ground ground = new Ground("ground.png");
 	
-
+	Shark shark = new Shark();
+	Fish fish = new Fish();
+	
+	Background background = new Background("background.png");
 	
 	//Score related vars and timer
-	int		roundTimer = 0;
-	int		score = 0;
-	long	time = 0;
-	int 	currRound = 1;
+	int		roundTimer;
+	int		score;
+	long	time; //long is bigger int that can hold bigger whole numbers
+	int 	wave;
+	int 	randVx = (int)(Math.random()*(4+4+1)-4);
+	int 	randVy = (int)(Math.random()*(4+4+1)-4);
+	int 	randX = (int)(Math.random()*(400)+10);
+
 	
 	/*
 	 * init any variables, objects etc for the "start"
@@ -39,32 +42,30 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 	 */
 	public void init() {
 		
-		shark2.setScale(0.5, 0.5);
-		shark2.setWidthHeight(30, 30);
-		shark2.setXY(400, 430);
-		shark2.setVx(0);
-		shark2.setVy(0);
+		roundTimer = 30;
+		score = 0;
+		time = 0;
+		wave = 1;
+		
+		shark.setScale(0.5, 0.5);
+		shark.setXY(170, 430);
 
-		fish1.setXY(50, 410);
-		fish1.setScale(0.5,0.5);
-		fish1.setVx((int)(Math.random()*(4+4+1))-4);
-		fish1.setVy((int)(Math.random()*(4+4+1))-4);
+		fish.setWidthHeight(60, 60);
+		fish.setScale(0.5,0.5);
+		fish.setVx(randVx);
+		fish.setVy(randVy);
+		fish.setX(randX);
+		fish.setY(350);
+		//StdAudio.playInBackground("blablabla.wav");
 		
 		//background state
 		background.setScale(2,2);
 		background.setXY(0, 0);
-		
-		ground.setScale(2, 2);
-		ground.setXY(0, 0);
 	}
 	
 	
 	public void reset() {
 		//stuff to init the fish object
-		fish1.setScale(1, 1);
-		fish1.setVx((int)(Math.random()*(4+4+1))-4);
-		fish1.setVy((int)(Math.random()*(4+4+1))-4);
-
 		
 	}
 	
@@ -74,25 +75,16 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 	public void nextRound() {
 		
 		//reset the roundCounter
-		roundTimer = 30;
-		currRound++; //next round
+		wave += 1;
+		roundTimer += 30;
 		
-		//re-calibrate your objects
-		shark2.setXY(250,250);
+		fish.setXY(420,  350);
+		fish.setVx(2*wave);
+		fish.setVy(-2*wave);
 		
-		/*
-		 * Maybe additional objects appear?
-		 * they start off OFF the screen like in negative -1000 y
-		 * maybe previously the additional characters have 0 vx and vy and off the screen
-		 * 
-		 */
-		
-		/*
-		 * maybe the speed of the objects get faster over time each round
-		 * int val = (int)(Math.random()*(max-min_+1)) + min
-		 */
-		int randVx = (int)(Math.random()*(4))+1;
-		shark2.setVx(randVx + currRound);
+		shark.setXY(140,  430);
+		shark.setVx(0);
+		shark.setVy(0);
 	}
 	
 	
@@ -102,59 +94,80 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		//add 16 to time since paint is called every 20ms
 		time += 20; //time elapse updates :)
 		
-		if(time%1000 == 0) { //has it been 1 second?
+		if(time%500 == 0) { //has it been 1 second?
 			roundTimer -= 1;
-			if(roundTimer > 0) { 
-				roundTimer++;
-			}
 		}
-			if(roundTimer<=30) {
-				shark2.setXY(550, 430);
+			if(roundTimer==0) {
+				t.stop();
+				nextRound();
 			}
 		
 		
 		
 		//LAYER your objects as you want them to layer visually!\
-		g.setFont(bigFont);
 		background.paint(g); 
-		ground.paint(g);
-		shark2.paint(g);
-		fish1.paint(g);
+		shark.paint(g);
+		fish.paint(g);
 		
 		
 		//logic for resetting the dog position
 		// and or making it bounce around
-		if((fish1.getX()<0) || (fish1.getX()>800)) {
-			fish1.setVx(fish1.getVx()*-1);
-		}
-		if((fish1.getY()<0) || (fish1.getY()>500)) {
-			fish1.setVy(fish1.getVy()*-1);
-		}
-		if(((fish1.getVx() == 0) && (fish1.getVy()>0))) {
-			fish1.setVy(0);
+		if((fish.getY() > 500) || (fish.getY() == 350)) {
+			fish.setY(430);
+			if(shark.getX()!=0) {
+				fish.setX((int)(Math.random()*(691)+10));
+				fish.setVx((int)(Math.random()*(5+5+1)-5));
+				fish.setVy((int)(Math.random()*(-5+3+1)-3));
+
+			}
+			if(wave >1) {
+				fish.setX((int)(Math.random()*(691)+10));
+				fish.setVx((int)(Math.random()*(5+5+1)-5)*wave);
+				fish.setVy((int)(Math.random()*(-5+3+1)-3)*wave);
+			}
 		}
 		
+		if(shark.getY() < 240) {
+			shark.setVy(4);
+		}
+		if(shark.getY()>350) {
+			shark.setXY(170, 350);
+			shark.setVy(0);
+		}
+		
+		if(shark.getY() <0) {
+			shark.setVy(fish.getVy()*-1);
+			//StdAudio.playInBackground("blabla.wav");
+			//more
+		}
+	
 		
 		//draw time related strings last so they are overlayed on top of anything else
-				g.setFont(bigFont);
-				
-				//draw the round String
-				g.setColor(Color.white);
-
-				g.drawString(""+this.roundTimer, 120, 100);
-				g.drawString("Score: "+this.score, 600, 100 );
-				
-				//round text is slightly smaller
-				g.setFont(medFont);
-				g.setColor(Color.white);
-				g.drawString("Round "+this.currRound, 5, 690);
-				
-				//Text for moving to next round
-				if(roundTimer==30) {
-					g.setFont(medFont);
-					g.drawString("Press the space bar for the next round", 50, 0);
-				}
-		//draw time related 
+		if(!t.isRunning()) {
+			g.setFont(medFont);
+			g.setColor(Color.white);
+			g.drawString("Press the space bar for enext round!", 170, 200);
+		}
+		
+		g.setFont(medFont);
+		g.setColor(Color.white);
+		
+		g.drawString("Score: " + this.score, 400, 550);
+		
+		if(roundTimer >= 10) {
+			g.drawString("Time "+this.roundTimer, 660, 550);
+		}
+		else if(roundTimer >= 0 && roundTimer <10) {
+			g.drawString("Time: "+this.roundTimer, 660, 550);
+		}
+		else {
+			fish.setVx(0);;
+			fish.setXY(420,430);
+		}
+		
+		//waves
+		g.setFont(medFont);
+		g.drawString("Round: " +this.wave, 10, 40);
 	}
 	
 	
@@ -185,7 +198,6 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 	@Override
 	public void mouseClicked(MouseEvent arg0) {
 		// TODO Auto-generated method stub
-		shark2.setVx(5);
 	}
 
 	@Override
@@ -206,26 +218,21 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 		
 		//perform a rectangle collision with the mouse and
 		//the object
-		Rectangle rMouse = new Rectangle(mouse.getX(), mouse.getY(), 25, 25); //guess-and-check size for now
+		Rectangle rMouse = new Rectangle(mouse.getX(), mouse.getY(), 120, 200); //guess-and-check size for now
 		
 		//2nd rectangle will be for your OBJECT (aka the duck)
-		Rectangle rMain = new Rectangle(
-									fish1.getX(),fish1.getY(),
-									fish1.getWidth(), fish1.getHeight() // add number if it is bigger than 25,25
-								);
+		Rectangle rMain = new Rectangle(shark.getX()+8, shark.getY()+6, shark.getWidth(), shark.getHeight());
+			
 		
 		//check if they're colliding
 		if(rMouse.intersects(rMain)) { //do the 2 rect intersect?
-			fish1.setVy(10);
-			fish1.setVx(0);
-			
-			//There was a successful click!
-			//dog needs to move in the same ~x [position as the duck or your main character
-			//make sure dog is currently off the screen (bottom) - y location related
-			//make the dog y velocity negative (so it goes up)
-			shark2.setX(fish1.getX()); //may need to add some offset (positive or negative to center
-			shark2.setY(500); //in case the dog is is way in the abyss, let's bring it back to some y position
-			shark2.setVy(-3); //dog goes up
+			if(roundTimer>0) {
+				fish.setVy(10);;
+				fish.setVx(0);;
+				score += 1;
+				shark.setVy(-4);;
+				//StdAudio.playInBackground("blabla.wav");
+			}
 		}
 	}
 
@@ -243,18 +250,9 @@ public class Frame extends JPanel implements ActionListener, MouseListener, KeyL
 
 	@Override
 	public void keyPressed(KeyEvent arg0) {
-
 		System.out.println(arg0.getKeyCode());
-		
-		//space bar continues the round
-		//if the timer is stopped we can start it again
-		if(arg0.getKeyCode()==32) {
-			//start the timer again
+		if(arg0.getKeyCode() == 32) {
 			if(!t.isRunning()) {
-				shark2.setVy(5);
-				fish1.setVx(3);
-				fish1.setVy(2);
-				roundTimer = 30;
 				t.start();
 			}
 		}
